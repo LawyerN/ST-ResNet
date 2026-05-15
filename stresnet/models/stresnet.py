@@ -37,18 +37,17 @@ class STResNet(nn.Module):
 
         # for fusion
         self.W_c = nn.parameter.Parameter(
-            torch.randn(self.nb_flow, self.map_width, self.map_height),
+            torch.ones(self.nb_flow, self.map_width, self.map_height),
             requires_grad=True,
         )
         self.W_p = nn.parameter.Parameter(
-            torch.randn(self.nb_flow, self.map_width, self.map_height),
+            torch.ones(self.nb_flow, self.map_width, self.map_height),
             requires_grad=True,
         )
         self.W_t = nn.parameter.Parameter(
-            torch.randn(self.nb_flow, self.map_width, self.map_height),
+            torch.ones(self.nb_flow, self.map_width, self.map_height),
             requires_grad=True,
         )
-
     def _create_extnet(self, ext_dim: int, nb_total_flows: int) -> nn.Sequential:
         ext_net = nn.Sequential(
             nn.Linear(ext_dim, nb_total_flows),
@@ -79,7 +78,7 @@ class STResNet(nn.Module):
         time_net.add_module(
             "Conv2",
             nn.Conv2d(
-                in_channels=64, out_channels=2, kernel_size=3, stride=1, padding="same"
+                in_channels=64, out_channels=self.nb_flow, kernel_size=3, stride=1, padding="same"
             ),
         )
         return time_net
@@ -95,7 +94,7 @@ class STResNet(nn.Module):
         p_out = self.p_net(xp)
         t_out = self.t_net(xt)
 
-        if self.external_dim:
+        if self.external_dim and ext is not None:
             e_out = self.e_net(ext).view(
                 -1, self.nb_flow, self.map_width, self.map_height
             )

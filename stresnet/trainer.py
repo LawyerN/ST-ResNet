@@ -33,17 +33,18 @@ class Trainer:
         self.best_loss = float("inf")
 
     def __to_numpy(self, x: torch.Tensor) -> np.ndarray:
-        x_ = x.cpu().detach().numpy()
-        return x_.reshape(1, -1)
+        return x.cpu().detach().numpy()
 
     def _inverse_transform(self, x: torch.Tensor) -> np.ndarray:
         x_ = self.__to_numpy(x)
-        return self.scaler.inverse_transform(x_)
+        batch_size = x_.shape[0]
+        x_flat = x_.reshape(batch_size, -1)
+        return self.scaler.inverse_transform(x_flat)
 
     def _inverse_loss(self, x: torch.Tensor, y: torch.Tensor) -> float:
         x_ = self._inverse_transform(x)
         y_ = self._inverse_transform(y)
-        rmse = mean_squared_error(x_, y_, squared=False)
+        rmse = np.sqrt(mean_squared_error(x_, y_))
         return rmse
 
     def fit(self, model: nn.Module):
@@ -92,5 +93,5 @@ class Trainer:
 
         if epoch is not None:
             if losses.avg <= self.best_loss:
-                self.best_acc = losses.avg
+                self.best_loss = losses.avg
                 torch.save(model.state_dict(), Path(self.save_dir).joinpath("best.pth"))

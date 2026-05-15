@@ -13,6 +13,7 @@ class ResUnit(nn.Module):
             kernel_size=3,
             stride=1,
             padding="same",
+            bias = False,
         )
         self.bn2 = nn.BatchNorm2d(num_features=out_channels)
         self.conv2 = nn.Conv2d(
@@ -22,6 +23,16 @@ class ResUnit(nn.Module):
             stride=1,
             padding="same",
         )
+        if in_channels != out_channels:
+            self.shortcut = nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=1,
+                stride=1,
+                bias=False
+            )
+        else:
+            self.shortcut = nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         z = self.bn1(x)
@@ -30,4 +41,4 @@ class ResUnit(nn.Module):
         z = self.bn2(z)
         z = F.relu(z)
         z = self.conv2(z)
-        return z + x
+        return z + self.shortcut(x)
